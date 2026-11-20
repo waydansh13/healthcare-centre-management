@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment and credentials
+.env
+.env.*
+!.env.example
+service-account-key.json
+**/*service-account*.json
+*.pem
+*.key
+
+# Logs and runtime files
+*.log
+npm-debug.log*
+.DS_Store
+._*

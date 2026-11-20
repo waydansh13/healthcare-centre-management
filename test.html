@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniHealth Center - Medical Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #06b6d4;
+            --dark-bg: #0f172a;
+            --dark-surface: #1e293b;
+            --dark-card: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border: #475569;
+            --success: #22c55e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        
+        /* Role Selection Screen */
+        .role-selection {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .role-header {
+            margin-bottom: 3rem;
+        }
+        
+        .role-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+        
+        .role-header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 600px;
+        }
+        
+        .role-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1000px;
+            width: 100%;
+        }
+        
+        .role-card {
+            background: var(--dark-card);
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .role-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: 0 15px 35px rgba(99, 102, 241, 0.2);
+        }
+        
+        .role-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 1.5rem;
+        }
+        
+        .admin-icon { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+        .doctor-icon { background: rgba(16, 185, 129, 0.2); color: var(--secondary); }
+        .patient-icon { background: rgba(99, 102, 241, 0.2); color: var(--primary); }
+        
+        .role-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .role-card p {
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+        
+        .role-features {
+            text-align: left;
+            margin-top: 1.5rem;
+        }
+        
+        .role-features li {
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .role-features i {
+            color: var(--primary);
+            font-size: 0.8rem;
+        }
+        
+        /* Login Container */
+        .login-container {
+            display: none;
+            width: 100%;
+            min-height: 100vh;
+        }
+        
+        .login-left {
+            flex: 1;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .login-left h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .login-left p {
+            font-size: 1.1rem;
+            max-width: 500px;
+            line-height: 1.6;
+        }
+        
+        .login-right {
+            flex: 1;
+            background-color: var(--dark-surface);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+        
+        .login-form {
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .login-header h2 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .login-header p {
+            color: var(--text-muted);
+        }
+        
+        .role-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: var(--primary);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: var(--dark-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            width: 100%;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        
+        .btn-back {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            margin-top: 1rem;
+        }
+        
+        .btn-back:hover {
+            background: var(--dark-card);
+        }
+        
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--secondary);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        /* Form Tabs */
+        .form-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: var(--text-muted);
+            transition: all 0.3s;
+            font-weight: 500;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .form-tab.active {
+            border-bottom: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        /* Main App Styles */
+        #app {
+            display: none;
+            width: 100%;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            width: 260px;
+            background: var(--dark-surface);
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+        
+        .sidebar-header {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .sidebar-header h2 {
+            font-size: 1.3rem;
+        }
+        
+        .sidebar-menu {
+            padding: 1rem 0;
+        }
+        
+        .sidebar-menu ul {
+            list-style: none;
+        }
+        
+        .sidebar-menu li {
+            margin-bottom: 4px;
+        }
+        
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 12px 1.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s;
+            gap: 12px;
+        }
+        
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+            border-left: 4px solid var(--primary);
+        }
+        
+        .sidebar-menu i {
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .user-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        /* Dashboard Cards */
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background: var(--dark-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid var(--border);
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .bg-primary { background: rgba(99, 102, 241, 0.2); color: var(--primary); }
+        .bg-success { background: rgba(16, 185, 129, 0.2); color: var(--secondary); }
+        .bg-warning { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+        .bg-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+        
+        .card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        /* Table Styles */
+        .table-container {
+            background: var(--dark-card);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+        
+        .table-header {
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .table-header h2 {
+            font-size: 1.3rem;
+        }
+        
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: var(--dark-surface);
+            padding: 8px 15px;
+            border-radius: 8px;
+            width: 300px;
+            border: 1px solid var(--border);
+        }
+        
+        .search-box input {
+            border: none;
+            background: transparent;
+            outline: none;
+            width: 100%;
+            margin-left: 10px;
+            color: var(--text-primary);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 1rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--dark-surface);
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        
+        tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        
+        .status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-scheduled { background: rgba(99, 102, 241, 0.2); color: var(--primary); }
+        .status-completed { background: rgba(16, 185, 129, 0.2); color: var(--secondary); }
+        .status-cancelled { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+        
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            margin-right: 10px;
+            transition: color 0.3s;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        
+        .action-btn:hover {
+            color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+        
+        /* Form Styles */
+        .form-container {
+            background: var(--dark-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--dark-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        
+        .btn-secondary {
+            background: var(--dark-surface);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--dark-card);
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+        
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: var(--text-muted);
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            border-bottom: 2px solid var(--primary);
+            color: var(--primary);
+            font-weight: 500;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Section Content */
+        .section-content {
+            display: none;
+        }
+        
+        .section-content.active {
+            display: block;
+        }
+        
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid var(--primary);
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 70px;
+            }
+            
+            .sidebar-header h2, .sidebar-menu span {
+                display: none;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .login-container {
+                flex-direction: column;
+            }
+            
+            .role-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .role-card {
+                padding: 2rem 1.5rem;
+            }
+            
+            .dashboard-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .table-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+            
+            .search-box {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Role Selection Screen -->
+    <div class="role-selection" id="roleSelection">
+        <div class="role-header">
+            <i class="fas fa-clinic-medical fa-4x" style="color: var(--primary); margin-bottom: 1.5rem;"></i>
+            <h1>UniHealth Center</h1>
+            <p>Welcome to the University Health Center Management System. Please select your role to continue.</p>
+        </div>
+        
+        <div class="role-cards">
+            <!-- Admin Card -->
+            <div class="role-card" data-role="admin">
+                <div class="role-icon admin-icon">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <h3>Administrator</h3>
+                <p>Manage the entire health center system, users, and configurations</p>
+                <ul class="role-features">
+                    <li><i class="fas fa-check"></i> Manage all users and roles</li>
+                    <li><i class="fas fa-check"></i> System configuration</li>
+                    <li><i class="fas fa-check"></i> Generate reports and analytics</li>
+                    <li><i class="fas fa-check"></i> Database management</li>
+                </ul>
+            </div>
+            
+            <!-- Doctor Card -->
+            <div class="role-card" data-role="doctor">
+                <div class="role-icon doctor-icon">
+                    <i class="fas fa-user-md"></i>
+                </div>
+                <h3>Medical Doctor</h3>
+                <p>Access patient records, manage appointments, and provide medical care</p>
+                <ul class="role-features">
+                    <li><i class="fas fa-check"></i> View patient medical history</li>
+                    <li><i class="fas fa-check"></i> Manage appointments</li>
+                    <li><i class="fas fa-check"></i> Write prescriptions</li>
+                    <li><i class="fas fa-check"></i> Update medical records</li>
+                </ul>
+            </div>
+            
+            <!-- Patient Card -->
+            <div class="role-card" data-role="patient">
+                <div class="role-icon patient-icon">
+                    <i class="fas fa-user-injured"></i>
+                </div>
+                <h3>Patient</h3>
+                <p>Access your medical records, book appointments, and view prescriptions</p>
+                <ul class="role-features">
+                    <li><i class="fas fa-check"></i> View personal medical history</li>
+                    <li><i class="fas fa-check"></i> Book appointments</li>
+                    <li><i class="fas fa-check"></i> Access prescriptions</li>
+                    <li><i class="fas fa-check"></i> Update personal information</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Container (Hidden by default) -->
+    <div class="login-container" id="loginContainer">
+        <div class="login-left">
+            <i class="fas fa-clinic-medical fa-5x" style="margin-bottom: 2rem; opacity: 0.9;"></i>
+            <h1 id="loginRoleTitle">UniHealth Center</h1>
+            <p id="loginRoleDescription">Comprehensive medical management system for university health centers.</p>
+        </div>
+        <div class="login-right">
+            <div class="login-form">
+                <div class="form-tabs">
+                    <div class="form-tab active" data-tab="login">Sign In</div>
+                    <div class="form-tab" data-tab="register">Create Account</div>
+                </div>
+                
+                <!-- Login Form -->
+                <div class="tab-content active" id="loginTab">
+                    <div class="login-header">
+                        <div class="role-badge" id="loginRoleBadge">Admin</div>
+                        <h2>Welcome Back</h2>
+                        <p>Sign in to your account</p>
+                    </div>
+                    
+                    <div class="alert alert-error" id="loginError"></div>
+                    <div class="alert alert-success" id="loginSuccess"></div>
+                    
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="loginEmail">Email Address</label>
+                            <input type="email" class="form-control" id="loginEmail" placeholder="Enter your email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">Password</label>
+                            <input type="password" class="form-control" id="loginPassword" placeholder="Enter your password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="loginBtn">
+                            <span>Sign In</span>
+                            <div class="spinner" id="loginSpinner"></div>
+                        </button>
+                    </form>
+                    
+                    <button class="btn btn-back" id="backToRoleSelection">
+                        <i class="fas fa-arrow-left"></i> Back to Role Selection
+                    </button>
+                </div>
+                
+                <!-- Registration Form -->
+                <div class="tab-content" id="registerTab">
+                    <div class="login-header">
+                        <div class="role-badge" id="registerRoleBadge">Admin</div>
+                        <h2>Create Account</h2>
+                        <p>Register as a new user</p>
+                    </div>
+                    
+                    <div class="alert alert-error" id="registerError"></div>
+                    <div class="alert alert-success" id="registerSuccess"></div>
+                    
+                    <form id="registerForm">
+                        <div class="form-group">
+                            <label for="registerName">Full Name</label>
+                            <input type="text" class="form-control" id="registerName" placeholder="Enter your full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="registerEmail">Email Address</label>
+                            <input type="email" class="form-control" id="registerEmail" placeholder="Enter your email" required>
+                        </div>
+                        <div id="additionalFields">
+                            <!-- Additional fields will be dynamically added based on role -->
+                        </div>
+                        <div class="form-group">
+                            <label for="registerPassword">Password</label>
+                            <input type="password" class="form-control" id="registerPassword" placeholder="Create a password" required minlength="6">
+                        </div>
+                        <div class="form-group">
+                            <label for="registerConfirmPassword">Confirm Password</label>
+                            <input type="password" class="form-control" id="registerConfirmPassword" placeholder="Confirm your password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="registerBtn">
+                            <span>Create Account</span>
+                            <div class="spinner" id="registerSpinner"></div>
+                        </button>
+                    </form>
+                    
+                    <button class="btn btn-back" id="backToRoleSelection2">
+                        <i class="fas fa-arrow-left"></i> Back to Role Selection
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="app">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-clinic-medical"></i>
+                <h2>UniHealth Center</h2>
+            </div>
+            <div class="sidebar-menu">
+                <ul>
+                    <li><a href="#" class="active" data-section="dashboard"><i class="fas fa-home"></i> <span>Dashboard</span></a></li>
+                    <li id="patientsMenuItem" style="display: none;"><a href="#" data-section="students"><i class="fas fa-user-injured"></i> <span>Patients</span></a></li>
+                    <li id="doctorsMenuItem" style="display: none;"><a href="#" data-section="doctors"><i class="fas fa-user-md"></i> <span>Doctors</span></a></li>
+                    <li><a href="#" data-section="appointments"><i class="fas fa-calendar-check"></i> <span>Appointments</span></a></li>
+                    <li id="medicinesMenuItem" style="display: none;"><a href="#" data-section="medicines"><i class="fas fa-pills"></i> <span>Medicines</span></a></li>
+                    <li><a href="#" data-section="records"><i class="fas fa-file-medical"></i> <span>Medical Records</span></a></li>
+                    <li id="reportsMenuItem" style="display: none;"><a href="#" data-section="reports"><i class="fas fa-chart-bar"></i> <span>Reports</span></a></li>
+                    <li id="adminMenuItem" style="display: none;"><a href="#" data-section="admin"><i class="fas fa-cog"></i> <span>Admin Panel</span></a></li>
+                    <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <h1 id="pageTitle">Dashboard</h1>
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div>
+                        <div id="userName">Loading...</div>
+                        <small id="userRole">User</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div id="dashboardContent" class="section-content active">
+                <div class="dashboard-cards">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon bg-primary">
+                                <i class="fas fa-user-injured"></i>
+                            </div>
+                        </div>
+                        <h3 id="studentsCount">0</h3>
+                        <p>Registered Patients</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon bg-success">
+                                <i class="fas fa-user-md"></i>
+                            </div>
+                        </div>
+                        <h3 id="doctorsCount">0</h3>
+                        <p>Medical Staff</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon bg-warning">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                        </div>
+                        <h3 id="appointmentsCount">0</h3>
+                        <p>Today's Appointments</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon bg-danger">
+                                <i class="fas fa-pills"></i>
+                            </div>
+                        </div>
+                        <h3 id="lowStockCount">0</h3>
+                        <p>Low Stock Medicines</p>
+                    </div>
+                </div>
+
+                <!-- Recent Appointments Table -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <h2>Recent Appointments</h2>
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" placeholder="Search appointments...">
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Patient ID</th>
+                                <th>Patient Name</th>
+                                <th>Doctor</th>
+                                <th>Date & Time</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appointmentsTableBody">
+                            <!-- Appointments will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="form-container">
+                    <div class="tabs">
+                        <div class="tab active" data-tab="appointment">New Appointment</div>
+                        <div id="addPatientTab" class="tab" data-tab="patient" style="display: none;">Add Patient</div>
+                        <div id="addMedicineTab" class="tab" data-tab="medicine" style="display: none;">Add Medicine</div>
+                    </div>
+                    
+                    <div class="tab-content active" id="appointmentTab">
+                        <div class="form-group">
+                            <label for="studentSelect">Select Patient</label>
+                            <select class="form-control" id="studentSelect">
+                                <option value="">-- Select Patient --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="doctorSelect">Select Doctor</label>
+                            <select class="form-control" id="doctorSelect">
+                                <option value="">-- Select Doctor --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="appointmentDate">Appointment Date & Time</label>
+                            <input type="datetime-local" class="form-control" id="appointmentDate">
+                        </div>
+                        <div class="form-group">
+                            <label for="appointmentReason">Reason for Visit</label>
+                            <textarea class="form-control" id="appointmentReason" rows="3" placeholder="Describe the reason for appointment..."></textarea>
+                        </div>
+                        <button class="btn btn-primary" id="scheduleAppointmentBtn">
+                            <i class="fas fa-calendar-plus"></i> Schedule Appointment
+                        </button>
+                    </div>
+                    
+                    <div class="tab-content" id="patientTab">
+                        <div class="form-group">
+                            <label for="studentId">Patient ID</label>
+                            <input type="text" class="form-control" id="studentId" placeholder="Enter patient ID">
+                        </div>
+                        <div class="form-group">
+                            <label for="studentName">Full Name</label>
+                            <input type="text" class="form-control" id="studentName" placeholder="Enter full name">
+                        </div>
+                        <div class="form-group">
+                            <label for="studentEmail">Email</label>
+                            <input type="email" class="form-control" id="studentEmail" placeholder="Enter email">
+                        </div>
+                        <div class="form-group">
+                            <label for="studentPhone">Phone Number</label>
+                            <input type="tel" class="form-control" id="studentPhone" placeholder="Enter phone number">
+                        </div>
+                        <button class="btn btn-primary" id="addStudentBtn">
+                            <i class="fas fa-user-plus"></i> Add Patient
+                        </button>
+                    </div>
+                    
+                    <div class="tab-content" id="medicineTab">
+                        <div class="form-group">
+                            <label for="medicineName">Medicine Name</label>
+                            <input type="text" class="form-control" id="medicineName" placeholder="Enter medicine name">
+                        </div>
+                        <div class="form-group">
+                            <label for="medicineType">Medicine Type</label>
+                            <select class="form-control" id="medicineType">
+                                <option value="">-- Select Type --</option>
+                                <option value="tablet">Tablet</option>
+                                <option value="capsule">Capsule</option>
+                                <option value="syrup">Syrup</option>
+                                <option value="injection">Injection</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="stockQuantity">Stock Quantity</label>
+                            <input type="number" class="form-control" id="stockQuantity" placeholder="Enter quantity">
+                        </div>
+                        <div class="form-group">
+                            <label for="expiryDate">Expiry Date</label>
+                            <input type="date" class="form-control" id="expiryDate">
+                        </div>
+                        <button class="btn btn-primary" id="addMedicineBtn">
+                            <i class="fas fa-pills"></i> Add Medicine
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other Section Contents -->
+            <div id="studentsContent" class="section-content">
+                <div class="table-container">
+                    <div class="table-header">
+                        <h2>Patient Records</h2>
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" placeholder="Search patients...">
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Patient ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Blood Group</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTableBody">
+                            <!-- Patients will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div id="doctorsContent" class="section-content">
+                <div class="table-container">
+                    <div class="table-header">
+                        <h2>Medical Staff</h2>
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" placeholder="Search doctors...">
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Doctor ID</th>
+                                <th>Name</th>
+                                <th>Specialization</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="doctorsTableBody">
+                            <!-- Doctors will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Add more section contents as needed -->
+            <div id="appointmentsContent" class="section-content">
+                <!-- Appointments management content -->
+            </div>
+            
+            <div id="medicinesContent" class="section-content">
+                <!-- Medicines management content -->
+            </div>
+            
+            <div id="recordsContent" class="section-content">
+                <!-- Medical records content -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "YOUR_FIREBASE_API_KEY",
+            authDomain: "unihealth-center.firebaseapp.com",
+            projectId: "unihealth-center",
+            storageBucket: "unihealth-center.firebasestorage.app",
+            messagingSenderId: "611698300072",
+            appId: "1:611698300072:web:67cd4873e588d2f7dade9d"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM Elements
+        const roleSelection = document.getElementById('roleSelection');
+        const loginContainer = document.getElementById('loginContainer');
+        const app = document.getElementById('app');
+        
+        // Role selection
+        let selectedRole = '';
+        let currentUserData = null;
+        
+        // Role selection event listeners
+        document.querySelectorAll('.role-card').forEach(card => {
+            card.addEventListener('click', function() {
+                selectedRole = this.getAttribute('data-role');
+                showLoginScreen(selectedRole);
+            });
+        });
+        
+        // Show login screen with selected role
+        function showLoginScreen(role) {
+            roleSelection.style.display = 'none';
+            loginContainer.style.display = 'flex';
+            
+            // Update UI based on role
+            const roleTitles = {
+                admin: 'Administrator Portal',
+                doctor: 'Doctor Portal', 
+                patient: 'Patient Portal'
+            };
+            
+            const roleDescriptions = {
+                admin: 'Manage the entire health center system and users',
+                doctor: 'Access patient records and manage medical care',
+                patient: 'Access your medical records and book appointments'
+            };
+            
+            const roleColors = {
+                admin: 'var(--danger)',
+                doctor: 'var(--secondary)',
+                patient: 'var(--primary)'
+            };
+            
+            document.getElementById('loginRoleTitle').textContent = roleTitles[role];
+            document.getElementById('loginRoleDescription').textContent = roleDescriptions[role];
+            document.getElementById('loginRoleBadge').textContent = role.charAt(0).toUpperCase() + role.slice(1);
+            document.getElementById('registerRoleBadge').textContent = role.charAt(0).toUpperCase() + role.slice(1);
+            
+            // Set badge color
+            const badges = document.querySelectorAll('.role-badge');
+            badges.forEach(badge => {
+                badge.style.background = roleColors[role];
+            });
+            
+            // Update additional fields based on role
+            updateRegistrationFields(role);
+        }
+        
+        // Update registration form based on role
+        function updateRegistrationFields(role) {
+            const additionalFields = document.getElementById('additionalFields');
+            let fieldsHTML = '';
+            
+            if (role === 'doctor') {
+                fieldsHTML = `
+                    <div class="form-group">
+                        <label for="doctorSpecialization">Specialization</label>
+                        <input type="text" class="form-control" id="doctorSpecialization" placeholder="Enter your specialization" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="doctorLicense">License Number</label>
+                        <input type="text" class="form-control" id="doctorLicense" placeholder="Enter license number" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="doctorDepartment">Department</label>
+                        <select class="form-control" id="doctorDepartment" required>
+                            <option value="">Select Department</option>
+                            <option value="general">General Medicine</option>
+                            <option value="pediatrics">Pediatrics</option>
+                            <option value="psychiatry">Psychiatry</option>
+                            <option value="dermatology">Dermatology</option>
+                            <option value="cardiology">Cardiology</option>
+                        </select>
+                    </div>
+                `;
+            } else if (role === 'patient') {
+                fieldsHTML = `
+                    <div class="form-group">
+                        <label for="patientStudentId">Student ID</label>
+                        <input type="text" class="form-control" id="patientStudentId" placeholder="Enter student ID" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="patientPhone">Phone Number</label>
+                        <input type="tel" class="form-control" id="patientPhone" placeholder="Enter phone number" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="patientDob">Date of Birth</label>
+                        <input type="date" class="form-control" id="patientDob" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="patientBloodGroup">Blood Group</label>
+                        <select class="form-control" id="patientBloodGroup" required>
+                            <option value="">Select Blood Group</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                        </select>
+                    </div>
+                `;
+            } else if (role === 'admin') {
+                fieldsHTML = `
+                    <div class="form-group">
+                        <label for="adminDepartment">Department</label>
+                        <input type="text" class="form-control" id="adminDepartment" placeholder="Enter department" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="adminPhone">Phone Number</label>
+                        <input type="tel" class="form-control" id="adminPhone" placeholder="Enter phone number" required>
+                    </div>
+                `;
+            }
+            
+            additionalFields.innerHTML = fieldsHTML;
+        }
+        
+        // Back to role selection
+        document.getElementById('backToRoleSelection').addEventListener('click', () => {
+            loginContainer.style.display = 'none';
+            roleSelection.style.display = 'flex';
+        });
+        
+        document.getElementById('backToRoleSelection2').addEventListener('click', () => {
+            loginContainer.style.display = 'none';
+            roleSelection.style.display = 'flex';
+        });
+        
+        // Form tab functionality
+        document.querySelectorAll('.form-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.getAttribute('data-tab');
+                
+                // Update active tabs
+                document.querySelectorAll('.form-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Show corresponding form
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(tabName + 'Tab').classList.add('active');
+                
+                // Clear messages when switching tabs
+                document.getElementById('loginError').style.display = 'none';
+                document.getElementById('loginSuccess').style.display = 'none';
+                document.getElementById('registerError').style.display = 'none';
+                document.getElementById('registerSuccess').style.display = 'none';
+            });
+        });
+        
+        // Login Function
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const loginSpinner = document.getElementById('loginSpinner');
+            
+            // Show loading state
+            loginBtn.disabled = true;
+            loginSpinner.style.display = 'block';
+            loginBtn.querySelector('span').textContent = 'Signing In...';
+            
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                showMessage('login', 'Login successful! Redirecting...', 'success');
+                
+                // Verify user role
+                const userDoc = await db.collection('users').doc(userCredential.user.uid).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    if (userData.role === selectedRole) {
+                        currentUserData = userData;
+                        setTimeout(() => {
+                            loginContainer.style.display = 'none';
+                            app.style.display = 'block';
+                            loadUserData(userCredential.user, userData);
+                            setupRoleBasedUI(userData.role);
+                        }, 1500);
+                    } else {
+                        showMessage('login', `This account is not registered as a ${selectedRole}. Please select the correct role.`, 'error');
+                        await auth.signOut();
+                    }
+                } else {
+                    showMessage('login', 'User data not found. Please contact administrator.', 'error');
+                    await auth.signOut();
+                }
+                
+            } catch (error) {
+                showMessage('login', error.message, 'error');
+            } finally {
+                // Reset loading state
+                loginBtn.disabled = false;
+                loginSpinner.style.display = 'none';
+                loginBtn.querySelector('span').textContent = 'Sign In';
+            }
+        });
+        
+        // Registration Function
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('registerConfirmPassword').value;
+            const registerBtn = document.getElementById('registerBtn');
+            const registerSpinner = document.getElementById('registerSpinner');
+            
+            // Validation
+            if (password !== confirmPassword) {
+                showMessage('register', 'Passwords do not match', 'error');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showMessage('register', 'Password must be at least 6 characters', 'error');
+                return;
+            }
+            
+            // Show loading state
+            registerBtn.disabled = true;
+            registerSpinner.style.display = 'block';
+            registerBtn.querySelector('span').textContent = 'Creating Account...';
+            
+            try {
+                // Create user with Firebase Auth
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Prepare user data based on role
+                let userData = {
+                    name: name,
+                    email: email,
+                    role: selectedRole,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    isActive: true
+                };
+                
+                // Add role-specific fields
+                if (selectedRole === 'doctor') {
+                    userData.specialization = document.getElementById('doctorSpecialization').value;
+                    userData.licenseNumber = document.getElementById('doctorLicense').value;
+                    userData.department = document.getElementById('doctorDepartment').value;
+                    userData.doctorId = 'DOC' + Date.now().toString().slice(-6);
+                } else if (selectedRole === 'patient') {
+                    userData.studentId = document.getElementById('patientStudentId').value;
+                    userData.phone = document.getElementById('patientPhone').value;
+                    userData.dateOfBirth = document.getElementById('patientDob').value;
+                    userData.bloodGroup = document.getElementById('patientBloodGroup').value;
+                    // Also create a patient record
+                    await db.collection('patients').doc(user.uid).set({
+                        studentId: userData.studentId,
+                        name: name,
+                        email: email,
+                        phone: userData.phone,
+                        dateOfBirth: userData.dateOfBirth,
+                        bloodGroup: userData.bloodGroup,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } else if (selectedRole === 'admin') {
+                    userData.department = document.getElementById('adminDepartment').value;
+                    userData.phone = document.getElementById('adminPhone').value;
+                    userData.adminId = 'ADM' + Date.now().toString().slice(-6);
+                }
+                
+                // Save user data to Firestore
+                await db.collection('users').doc(user.uid).set(userData);
+                
+                showMessage('register', 'Account created successfully! Redirecting...', 'success');
+                
+                currentUserData = userData;
+                
+                // Auto-login and redirect
+                setTimeout(() => {
+                    loginContainer.style.display = 'none';
+                    app.style.display = 'block';
+                    loadUserData(user, userData);
+                    setupRoleBasedUI(userData.role);
+                }, 2000);
+                
+            } catch (error) {
+                let errorMessage = 'Registration failed. Please try again.';
+                
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage = 'This email is already registered.';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = 'Invalid email address.';
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = 'Password is too weak.';
+                }
+                
+                showMessage('register', errorMessage, 'error');
+            } finally {
+                // Reset loading state
+                registerBtn.disabled = false;
+                registerSpinner.style.display = 'none';
+                registerBtn.querySelector('span').textContent = 'Create Account';
+            }
+        });
+        
+        // Setup role-based UI
+        function setupRoleBasedUI(role) {
+            // Show/hide menu items based on role
+            if (role === 'admin') {
+                document.getElementById('patientsMenuItem').style.display = 'block';
+                document.getElementById('doctorsMenuItem').style.display = 'block';
+                document.getElementById('medicinesMenuItem').style.display = 'block';
+                document.getElementById('reportsMenuItem').style.display = 'block';
+                document.getElementById('adminMenuItem').style.display = 'block';
+                document.getElementById('addPatientTab').style.display = 'block';
+                document.getElementById('addMedicineTab').style.display = 'block';
+            } else if (role === 'doctor') {
+                document.getElementById('patientsMenuItem').style.display = 'block';
+                document.getElementById('medicinesMenuItem').style.display = 'block';
+                document.getElementById('addPatientTab').style.display = 'block';
+            } else if (role === 'patient') {
+                // Patients can only see their own data and appointments
+                document.getElementById('patientsMenuItem').style.display = 'none';
+                document.getElementById('doctorsMenuItem').style.display = 'none';
+                document.getElementById('medicinesMenuItem').style.display = 'none';
+                document.getElementById('reportsMenuItem').style.display = 'none';
+                document.getElementById('adminMenuItem').style.display = 'none';
+                document.getElementById('addPatientTab').style.display = 'none';
+                document.getElementById('addMedicineTab').style.display = 'none';
+            }
+            
+            // Load dashboard data
+            loadDashboardData(role);
+        }
+        
+        // Load user data and update UI
+        function loadUserData(user, userData) {
+            document.getElementById('userName').textContent = userData.name;
+            document.getElementById('userRole').textContent = userData.role.charAt(0).toUpperCase() + userData.role.slice(1);
+            document.getElementById('userAvatar').textContent = userData.name.charAt(0).toUpperCase();
+            document.getElementById('currentUserRole').textContent = userData.role;
+        }
+        
+        // Load dashboard data
+        function loadDashboardData(role) {
+            // Load patients count (only for admin and doctor)
+            if (role === 'admin' || role === 'doctor') {
+                db.collection('patients').get().then((querySnapshot) => {
+                    document.getElementById('studentsCount').textContent = querySnapshot.size;
+                });
+            } else {
+                document.getElementById('studentsCount').textContent = '1';
+            }
+            
+            // Load doctors count (only for admin)
+            if (role === 'admin') {
+                db.collection('users').where('role', '==', 'doctor').get().then((querySnapshot) => {
+                    document.getElementById('doctorsCount').textContent = querySnapshot.size;
+                });
+            } else {
+                document.getElementById('doctorsCount').textContent = 'N/A';
+            }
+            
+            // Load appointments count
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            let appointmentsQuery = db.collection('appointments')
+                .where('date', '>=', today)
+                .where('date', '<', tomorrow);
+            
+            // If patient, only show their appointments
+            if (role === 'patient') {
+                appointmentsQuery = appointmentsQuery.where('patientId', '==', auth.currentUser.uid);
+            }
+            
+            appointmentsQuery.get().then((querySnapshot) => {
+                document.getElementById('appointmentsCount').textContent = querySnapshot.size;
+            });
+            
+            // Load low stock medicines (only for admin and doctor)
+            if (role === 'admin' || role === 'doctor') {
+                db.collection('medicines')
+                    .where('stock', '<=', 10)
+                    .get()
+                    .then((querySnapshot) => {
+                        document.getElementById('lowStockCount').textContent = querySnapshot.size;
+                    });
+            } else {
+                document.getElementById('lowStockCount').textContent = 'N/A';
+            }
+        }
+        
+        // Navigation between sections
+        document.querySelectorAll('.sidebar-menu a[data-section]').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const section = e.target.closest('a').getAttribute('data-section');
+                
+                // Update active states
+                document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
+                e.target.closest('a').classList.add('active');
+                
+                // Show/hide sections
+                document.querySelectorAll('.section-content').forEach(content => {
+                    content.style.display = 'none';
+                });
+                document.getElementById(section + 'Content').style.display = 'block';
+                document.getElementById('pageTitle').textContent = 
+                    section.charAt(0).toUpperCase() + section.slice(1);
+            });
+        });
+        
+        // Tab functionality in forms
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(tabId + 'Tab').classList.add('active');
+            });
+        });
+        
+        // Logout Function
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            auth.signOut().then(() => {
+                app.style.display = 'none';
+                roleSelection.style.display = 'flex';
+                document.getElementById('loginForm').reset();
+                document.getElementById('registerForm').reset();
+                showMessage('login', 'Logged out successfully', 'success');
+                currentUserData = null;
+            });
+        });
+        
+        // Utility Functions
+        function showMessage(formType, message, type) {
+            const errorElement = document.getElementById(formType + 'Error');
+            const successElement = document.getElementById(formType + 'Success');
+            
+            if (type === 'error') {
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+                successElement.style.display = 'none';
+            } else {
+                successElement.textContent = message;
+                successElement.style.display = 'block';
+                errorElement.style.display = 'none';
+            }
+            
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+                successElement.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Auth State Observer
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // User is signed in - we'll handle this in the login flow
+                console.log('User is signed in:', user.email);
+            } else {
+                // User is signed out
+                app.style.display = 'none';
+                loginContainer.style.display = 'none';
+                roleSelection.style.display = 'flex';
+                currentUserData = null;
+            }
+        });
+        
+        // Initialize with some sample data for demonstration
+        window.addEventListener('load', () => {
+            // This would be replaced with actual Firestore data
+            setTimeout(() => {
+                // Sample data for demo
+                if (document.getElementById('studentsCount').textContent === '0') {
+                    document.getElementById('studentsCount').textContent = '1,248';
+                }
+                if (document.getElementById('doctorsCount').textContent === '0') {
+                    document.getElementById('doctorsCount').textContent = '24';
+                }
+                if (document.getElementById('appointmentsCount').textContent === '0') {
+                    document.getElementById('appointmentsCount').textContent = '18';
+                }
+                if (document.getElementById('lowStockCount').textContent === '0') {
+                    document.getElementById('lowStockCount').textContent = '12';
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
